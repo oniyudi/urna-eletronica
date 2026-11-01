@@ -31,3 +31,11 @@ export interface ApuracaoEleicao {
     candidatos: ResultadoCandidato[]
 }
 
+// Listar todas as eleicoes
+export function listarEleicoes(): Eleicao[] {
+    const db = getDb()
+    return db.prepare('SELECT * FROM eleicoes ORDER BY id DESC').all() as Eleicao[]
+    // .all() retona todas as linhas encontradas como um array de objetos
+    // as Eleicao[] informa ao Typescript que o retorno segue a estrutura definida por Eleicao
+}
+

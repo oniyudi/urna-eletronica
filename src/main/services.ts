@@ -79,3 +79,27 @@ export function criarEleicao(
 
     return db.prepare('SELECT * FROM eleicoes WHERE id = ?').get(info.lastInsertRowid) as Eleicao
 }
+
+// alterar status da eleicao
+export function alterarStatusEleicao(
+    eleicaoId: number,
+    novoStatus: 'RASCUNHO' | 'EM_ANDAMENTO' | 'ENCERRADA'
+): Eleicao {
+    const db = getDb()
+
+    //garantindo que apenas uma eleicao esteja em andamento
+    if (novoStatus == 'EM_ANDAMENTO') {
+        const ativa = buscarEleicaoEmAndamento()
+        if(ativa && ativa.id !== eleicaoId) {
+            throw new Error(`A eleição "${ativa.titulo}" já está em andamento. Ecerre-a antes de iniciar outra.`)
+        }
+    }
+
+    if (novoStatus == 'ENCERRADA') {
+        db.prepare("UPDATE eleicoes SET status = ?, encerrado_em = datetime('now', 'localtime') WHERE id = ?")
+            .run(novoStatus, eleicaoId)
+    } else {
+        db.prepare("UPDATE eleicoes SET status = ? WHERE id = ?").run(novoStatus, eleicaoId)
+    }
+    return db.prepare('SELECT * FROM eleicoes WHERE id = ?').get(eleicaoId) as Eleicao
+}

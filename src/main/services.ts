@@ -10,7 +10,7 @@ export interface Eleicao {
     encerrado_em: string | null
 }
 
-export interface Cadidato {
+export interface Candidato {
     id: number
     eleicao_id: number
     nome: string
@@ -18,7 +18,7 @@ export interface Cadidato {
     criado_em: string
 }
 
-export interface ResultadoCandidato extends Cadidato {
+export interface ResultadoCandidato extends Candidato {
     votos: number
 }
 
@@ -102,4 +102,11 @@ export function alterarStatusEleicao(
         db.prepare("UPDATE eleicoes SET status = ? WHERE id = ?").run(novoStatus, eleicaoId)
     }
     return db.prepare('SELECT * FROM eleicoes WHERE id = ?').get(eleicaoId) as Eleicao
+}
+
+// lstar candidatos de uma eleicao especifica
+export function listarCandidatos(eleicaoId: number): Candidato[] {
+    const db = getDb()
+    return db.prepare('SELECT * FROM candidatos WHERE eleicao_id = ? ORDER BY numero ASC')
+        .all(eleicaoId) as Candidato[]
 }

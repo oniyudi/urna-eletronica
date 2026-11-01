@@ -50,3 +50,32 @@ export function buscarEleicaoEmAndamento(): Eleicao | null {
     // ?? null garante que a função retorne null em vez de undefined quando não houver eleicao em andamento
 }
 
+// Criar uma nova eleicao com regras de digitos personalizadas
+export function criarEleicao(
+    titulo: string,
+    tamanhoDigitos: number,
+    digitosPermitidos: string
+): Eleicao {
+    const db = getDb()
+
+    const tituloLimpo = titulo.trim()
+    if(!tituloLimpo) {
+        throw new Error('O título da eleição é obrigatório')
+    }
+
+    // removendo caracteres duplicados e garatindo que so existam numeros de 0 a 9
+    const digitosValidos = Array.from(new Set(digitosPermitidos.replace(/[^0-9]/g, '').split(''))).sort().join('')
+    // pego apenas digitos de 0 a 9, removo duplicados com o set (split transforma em array) e retorno a uma lista normal para poder usar o sort e o join
+
+    if (digitosValidos.length === 0) {
+        throw new Error('Selecione pelo menos um dígito permitido')
+    }
+
+    const stmt = db.prepare(`
+        INSERT INTO eleicoes (titulo, tamanho_digitos, digitos_permitidos)
+        VALUES (?, ?, ?)`)
+    
+    const info = stmt.run(tituloLimpo, tamanhoDigitos, digitosValidos)
+
+    return db.prepare('SELECT * FROM eleicoes WHERE id = ?').get(info.lastInsertRowid) as Eleicao
+}

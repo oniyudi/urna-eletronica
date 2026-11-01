@@ -39,3 +39,14 @@ export function listarEleicoes(): Eleicao[] {
     // as Eleicao[] informa ao Typescript que o retorno segue a estrutura definida por Eleicao
 }
 
+// Verificar se ha eleicao em andamento
+export function buscarEleicaoEmAndamento(): Eleicao | null {
+    const db = getDb()
+    const eleicao = db
+        .prepare("SELECT * FROM eleicoes WHERE status = 'EM_ANDAMENTO' LIMIT 1")
+        .get() as Eleicao | undefined
+    return eleicao ?? null
+    // .get() retorna a primeira linha encontrada ou undefined se não houver resultados
+    // ?? null garante que a função retorne null em vez de undefined quando não houver eleicao em andamento
+}
+

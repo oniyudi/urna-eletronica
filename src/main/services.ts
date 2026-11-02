@@ -159,3 +159,19 @@ export function cadastrarCandidato(
 
     return db.prepare('SELECT * FROM candidatos WHERE id = ?').get(info.lastInsertRowid) as Candidato
 }
+
+// remover um candidato - apenas se a eleicao estiver em rascunho
+export function removerCadidato(candidatoId: number): void {
+    const db = getDb()
+    const candidato = db.prepare('SELECT eleicao_id FROM candidatos WHERE id = ?').get(candidatoId) as { eleicao_id: number } | undefined
+
+    if (!candidato) return
+
+    const eleicao = db.prepare('SELECT status FROM eleicoes WHERE id = ?').get(candidato.eleicao_id) as { status: string }
+
+    if (eleicao.status !== 'RASCUNHO') {
+        throw new Error('Não é possível excluir candidatos de uma eleição iniciada ou encerrada.')
+    }
+
+    db.prepare('DELETE FROM candidatos WHERE id = ?').run(candidatoId)
+}

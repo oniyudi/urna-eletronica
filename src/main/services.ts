@@ -110,3 +110,52 @@ export function listarCandidatos(eleicaoId: number): Candidato[] {
     return db.prepare('SELECT * FROM candidatos WHERE eleicao_id = ? ORDER BY numero ASC')
         .all(eleicaoId) as Candidato[]
 }
+
+// cadastrar candidato em uma eleicao
+export function cadastrarCandidato(
+    eleicaoId: number, nome: string, numero: string
+): Candidato {
+    const db = getDb()
+
+    const eleicao = db.prepare('SELECT * FROM eleicoes WHERE id = ?').get(eleicaoId) as Eleicao | undefined
+    if(!eleicao) {
+        throw new Error('Eleicao não encontrada')
+    }
+
+    if(eleicao.status !== 'RASCUNHO') {
+        throw new Error('Só é permitido cadastrar candidatos enquanto a eleição')
+    }
+
+    const nomeLimpo = nome.trim()
+    const numeroLimpo = numero.trim()
+
+    if(!nomeLimpo) {
+        throw new Error('O nome do candidato é obrigatório')
+    }
+
+    if(!numeroLimpo) {
+        throw new Error('O número do candidato é obrigatório')
+    }
+
+    if(numeroLimpo.length !== eleicao.tamannho_digitos) {
+        throw new Error(`O número do candidato deve ter exatamente ${eleicao.tamannho_digitos} dígitos`)
+    }
+
+    for (const char of numeroLimpo) {
+        if(!eleicao.digitos_permitidos.includes(char)) {
+            throw new Error(`O número do candidato contém dígitos não permitidos. Dígitos permitidos: ${eleicao.digitos_permitidos}`)
+        }
+    }
+
+    const existente = db.prepare('SELECT * FROM candidatos WHERE eleicao_id = ? AND numero = ?')
+        .get(eleicaoId, numeroLimpo)
+    
+    if(existente) {
+        throw new Error(`Já existe um candidato com o número ${numeroLimpo} nesta eleição`)
+    }
+
+    const info = db.prepare('INSERT INTO candidatos (eleicao_id, nome, numero) VALUES (?, ?, ?)')
+        .run(eleicaoId, nomeLimpo, numeroLimpo)
+
+    return db.prepare('SELECT * FROM candidatos WHERE id = ?').get(info.lastInsertRowid) as Candidato
+}

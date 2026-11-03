@@ -210,48 +210,56 @@ export function registrarVoto(
 
 // funcao para obter a apuracao dos votos
 export function obterApuracao(eleicaoId: number): ApuracaoEleicao {
-    const db = getDb()
+  const db = getDb()
 
-    const eleicao = db.prepare('SELECT * FROm eleicoes WHERE id = ?').get(eleicaoId) as Eleicao | undefined
+  const eleicao = db.prepare('SELECT * FROM eleicoes WHERE id = ?').get(eleicaoId) as
+    | Eleicao
+    | undefined
 
-    if (!eleicao) {
-        throw new Error('Eleição não encontrada.')
-    }
+  if (!eleicao) {
+    throw new Error('Eleição não encontrada.')
+  }
 
-    const contagemTipos = db.prepare(
-        `
-        SELECT COUNT(*) as total,
+  const contagemTipos = db
+    .prepare(
+      `SELECT
+        COUNT(*) as total,
         SUM(CASE WHEN tipo = 'BRANCO' THEN 1 ELSE 0 END) as brancos,
         SUM(CASE WHEN tipo = 'NULO' THEN 1 ELSE 0 END) as nulos,
         SUM(CASE WHEN tipo = 'VALIDO' THEN 1 ELSE 0 END) as validos
-        FROM votos
-        WHERE eleicao_id = ?
-        `
+      FROM votos
+      WHERE eleicao_id = ?`
     )
     .get(eleicaoId) as {
-        total: number
-        brancos: number | null
-        nulos: number | null
-        validos: number | null
-    }
+    total: number
+    brancos: number | null
+    nulos: number | null
+    validos: number | null
+  }
 
-    const candidatoComVotos = db.prepare(
-        `
-        SELECT c.*, COUNT(v.id) as votos
-        FROM candidatos c
-        LEFT JOIN votos v ON v.candidato_id = c.id AND v..tipo = 'VALIDO'
-        WHERE c.eleicao_id = ?
-        GROUP BY c.id
-        ORDER BY votos DESC, c.nome ASC
-        `
-    ).all(eleicaoId) as ResultadoCandidato[]
+  const candidatosComVotos = db
+    .prepare(
+      `SELECT
+        candidatos.id,
+        candidatos.eleicao_id,
+        candidatos.nome,
+        candidatos.numero,
+        candidatos.criado_em,
+        COUNT(votos.id) as votos
+      FROM candidatos
+      LEFT JOIN votos ON votos.candidato_id = candidatos.id AND votos.tipo = 'VALIDO'
+      WHERE candidatos.eleicao_id = ?
+      GROUP BY candidatos.id
+      ORDER BY votos DESC, candidatos.nome ASC`
+    )
+    .all(eleicaoId) as ResultadoCandidato[]
 
-    return {
-        eleicao,
-        totalVotos: contagemTipos.total || 0,
-        votosBrancos: contagemTipos.brancos || 0,
-        votosNulos: contagemTipos.nulos || 0,
-        votosValidos: contagemTipos.validos || 0,
-        candidatos: candidatoComVotos
-    }
+  return {
+    eleicao,
+    totalVotos: contagemTipos.total || 0,
+    votosBrancos: contagemTipos.brancos || 0,
+    votosNulos: contagemTipos.nulos || 0,
+    votosValidos: contagemTipos.validos || 0,
+    candidatos: candidatosComVotos
+  }
 }

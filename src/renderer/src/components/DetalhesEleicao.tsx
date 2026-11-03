@@ -6,9 +6,12 @@ import {
   Play,
   CheckCircle2,
   AlertCircle,
-  Dices
+  Dices,
+  BarChart3,
+  Users
 } from 'lucide-react'
 import { Eleicao, Candidato } from '../../../preload/index.d'
+import { BoletimUrna } from './BoletimUrna'
 
 interface DetalhesEleicaoProps {
   eleicao: Eleicao

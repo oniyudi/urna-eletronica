@@ -9,7 +9,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { ApuracaoEleicao } from '../../../preload/index.d'
+import { ApuracaoEleicao } from '../../../preload'
 
 interface BoletimUrnaProps {
   eleicaoId: number

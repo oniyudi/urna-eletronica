@@ -18,10 +18,10 @@ export default function App(): React.JSX.Element {
     setEleicoes(todas)
     setEleicaoEmAndamento(ativa)
 
-    if (eleicaoSelecionada) {
-      const atualizada = todas.find((e) => e.id === eleicaoSelecionada.id)
-      if (atualizada) setEleicaoSelecionada(atualizada)
-    }
+    setEleicaoSelecionada((selecionadaAtual) => {
+      if (!selecionadaAtual) return null
+      return todas.find((e) => e.id === selecionadaAtual.id) ?? null
+    })
   }
 
   useEffect(() => {

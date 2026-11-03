@@ -175,3 +175,35 @@ export function removerCadidato(candidatoId: number): void {
 
     db.prepare('DELETE FROM candidatos WHERE id = ?').run(candidatoId)
 }
+
+// registrar voto em urna
+export function registrarVoto(
+    eleicaoId: number,
+    tipo: 'VALIDO' | 'BRANCO' | 'NULO',
+    numeroDigitado: string | null
+): void {
+    const db = getDb()
+
+    const eleicao = db.prepare('SELECT * FROM eleicoes WHERE id = ?').get(eleicaoId) as Eleicao | undefined
+
+    if(!eleicao || eleicao.status !== 'EM_ANDAMENTO') {
+        throw new Error('Esta eleicao não está aberta para voração')
+    }
+
+    let candidatoId: number | null = null
+    let tipoFinal = tipo
+
+    if (tipo === 'VALIDO' && numeroDigitado) {
+        const candidato = db.prepare('SELECT id FROM candidatos WHERE eleicao_id = ? AND numero = ?')
+            .get(eleicaoId, numeroDigitado) as { id: number } | undefined
+        
+        if(candidato) {
+            candidatoId = candidato.id
+        } else {
+            tipoFinal = 'NULO'
+        }
+    }
+
+    db.prepare('INSERT INTO votos (eleicao_id, candidato_id, tipo, numero_digitado) VALUES (?, ?, ?, ?)')
+        .run(eleicaoId, candidatoId, tipoFinal, numeroDigitado)
+}

@@ -12,7 +12,8 @@ import {
   cadastrarCandidato,
   removerCadidato,
   registrarVoto,
-  obterApuracao
+  obterApuracao,
+  excluirEleicao
 } from './services'
  
 function createWindow(): void {
@@ -82,6 +83,7 @@ app.whenReady().then(() => {
       registrarVoto(eleicaoId, tipo, numeroDigitado)
   )
   ipcMain.handle('urna:obterApuracao', (_, eleicaoId: number) => obterApuracao(eleicaoId))
+  ipcMain.handle('urna:excluirEleicao', (_, eleicaoId: number) => excluirEleicao(eleicaoId))
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

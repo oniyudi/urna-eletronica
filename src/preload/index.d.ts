@@ -52,6 +52,7 @@ export interface CustomAPI {
     numeroDigitado: string | null
   ) => Promise<void>
   obterApuracao: (eleicaoId: number) => Promise<ApuracaoEleicao>
+  excluirEleicao: (eleicaoId: number) => Promise<void>
 }
 
 declare global {

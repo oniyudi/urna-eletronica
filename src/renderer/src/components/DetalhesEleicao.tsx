@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react'
-import { ArrowLeft, UserPlus, Trash2, Play, CheckCircle2, AlertCircle, ShieldAlert } from 'lucide-react'
+import {
+  ArrowLeft,
+  UserPlus,
+  Trash2,
+  Play,
+  CheckCircle2,
+  AlertCircle,
+  Dices
+} from 'lucide-react'
 import { Eleicao, Candidato } from '../../../preload/index.d'
 
 interface DetalhesEleicaoProps {
@@ -7,6 +15,14 @@ interface DetalhesEleicaoProps {
   onVoltar: () => void
   onAtualizarStatus: (eleicaoAtualizada: Eleicao) => void
   onAbrirUrna: (eleicao: Eleicao) => void
+}
+
+// Remove o invólucro técnico de erro do IPC do Electron
+function limparMensagemErro(err: unknown): string {
+  if (err instanceof Error) {
+    return err.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
+  }
+  return 'Ocorreu um erro inesperado.'
 }
 
 export function DetalhesEleicao({
@@ -30,6 +46,31 @@ export function DetalhesEleicao({
     carregarCandidatos()
   }, [eleicao.id])
 
+  // Lógica de geração aleatória respeitando as regras da eleição e candidatos existentes
+  const gerarNumeroAleatorio = (): void => {
+    setErro(null)
+    const digitos = eleicao.digitos_permitidos.split('')
+    const numerosExistentes = new Set(candidatos.map((c) => c.numero))
+    const totalCombinacoesPossiveis = Math.pow(digitos.length, eleicao.tamanho_digitos)
+
+    if (numerosExistentes.size >= totalCombinacoesPossiveis) {
+      setErro('Todos os números possíveis para esta configuração de eleição já foram ocupados.')
+      return
+    }
+
+    let numeroGerado = ''
+    let tentativas = 0
+
+    do {
+      numeroGerado = Array.from({ length: eleicao.tamanho_digitos }, () =>
+        digitos[Math.floor(Math.random() * digitos.length)]
+      ).join('')
+      tentativas++
+    } while (numerosExistentes.has(numeroGerado) && tentativas < 1000)
+
+    setNumero(numeroGerado)
+  }
+
   const handleCadastrarCandidato = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
     setErro(null)
@@ -41,7 +82,8 @@ export function DetalhesEleicao({
       setNumero('')
       await carregarCandidatos()
     } catch (err: unknown) {
-      setErro(err instanceof Error ? err.message : 'Erro ao cadastrar candidato.')
+      // Exibe apenas a mensagem limpa
+      setErro(limparMensagemErro(err))
     } finally {
       setCarregando(false)
     }
@@ -60,12 +102,16 @@ export function DetalhesEleicao({
       return
     }
 
-    if (confirm('Ao iniciar a votação, não será mais possível adicionar ou remover candidatos. Deseja prosseguir?')) {
+    if (
+      confirm(
+        'Ao iniciar a votação, não será mais possível adicionar ou remover candidatos. Deseja prosseguir?'
+      )
+    ) {
       try {
         const atualizada = await window.api.alterarStatusEleicao(eleicao.id, 'EM_ANDAMENTO')
         onAtualizarStatus(atualizada)
       } catch (err: unknown) {
-        setErro(err instanceof Error ? err.message : 'Erro ao iniciar votação.')
+        setErro(limparMensagemErro(err))
       }
     }
   }
@@ -76,7 +122,7 @@ export function DetalhesEleicao({
         const atualizada = await window.api.alterarStatusEleicao(eleicao.id, 'ENCERRADA')
         onAtualizarStatus(atualizada)
       } catch (err: unknown) {
-        setErro(err instanceof Error ? err.message : 'Erro ao encerrar.')
+        setErro(limparMensagemErro(err))
       }
     }
   }
@@ -163,14 +209,27 @@ export function DetalhesEleicao({
               onChange={(e) => setNome(e.target.value)}
               className="flex-3 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 focus:outline-hidden focus:border-emerald-500"
             />
-            <input
-              type="text"
-              maxLength={eleicao.tamanho_digitos}
-              placeholder={`Nº (${eleicao.tamanho_digitos} dígitos)`}
-              value={numero}
-              onChange={(e) => setNumero(e.target.value)}
-              className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 font-mono focus:outline-hidden focus:border-emerald-500"
-            />
+
+            {/* Campo de Número com Botão de Sortear Integrado */}
+            <div className="flex-2 relative flex items-center">
+              <input
+                type="text"
+                maxLength={eleicao.tamanho_digitos}
+                placeholder={`Nº (${eleicao.tamanho_digitos} dígitos)`}
+                value={numero}
+                onChange={(e) => setNumero(e.target.value)}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-4 pr-11 py-2.5 text-white placeholder-zinc-500 font-mono focus:outline-hidden focus:border-emerald-500"
+              />
+              <button
+                type="button"
+                onClick={gerarNumeroAleatorio}
+                title="Sortear número válido automaticamente"
+                className="absolute right-2 p-1.5 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-700/60 rounded-lg transition-colors cursor-pointer"
+              >
+                <Dices className="w-5 h-5" />
+              </button>
+            </div>
+
             <button
               type="submit"
               disabled={carregando}

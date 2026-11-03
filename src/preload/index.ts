@@ -20,7 +20,8 @@ const api = {
     tipo: 'VALIDO' | 'BRANCO' | 'NULO',
     numeroDigitado: string | null
   ) => ipcRenderer.invoke('urna:registrarVoto', eleicaoId, tipo, numeroDigitado),
-  obterApuracao: (eleicaoId: number) => ipcRenderer.invoke('urna:obterApuracao', eleicaoId)
+  obterApuracao: (eleicaoId: number) => ipcRenderer.invoke('urna:obterApuracao', eleicaoId),
+  excluirEleicao: (eleicaoId: number) => ipcRenderer.invoke('urna:excluirEleicao', eleicaoId)
 }
 
 if (process.contextIsolated) {

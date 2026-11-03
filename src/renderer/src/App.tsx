@@ -107,7 +107,10 @@ export default function App(): React.JSX.Element {
         {eleicaoSelecionada ? (
           <DetalhesEleicao
             eleicao={eleicaoSelecionada}
-            onVoltar={() => setEleicaoSelecionada(null)}
+            onVoltar={() => {
+              setEleicaoSelecionada(null)
+              carregarDados()
+            }}
             onAtualizarStatus={(atualizada) => {
               setEleicaoSelecionada(atualizada)
               carregarDados()

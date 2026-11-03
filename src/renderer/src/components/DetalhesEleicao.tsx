@@ -39,6 +39,9 @@ export function DetalhesEleicao({
   const [numero, setNumero] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(false)
+  const [abaAtiva, setAbaAtiva] = useState<'CANDIDATOS' | 'APURACAO'>(
+    eleicao.status === 'ENCERRADA' ? 'APURACAO' : 'CANDIDATOS'
+  )
 
   const carregarCandidatos = async (): Promise<void> => {
     const lista = await window.api.listarCandidatos(eleicao.id)
@@ -124,6 +127,7 @@ export function DetalhesEleicao({
       try {
         const atualizada = await window.api.alterarStatusEleicao(eleicao.id, 'ENCERRADA')
         onAtualizarStatus(atualizada)
+        setAbaAtiva('APURACAO') // Abre o Boletim de Urna imediatamente após encerrar
       } catch (err: unknown) {
         setErro(limparMensagemErro(err))
       }
@@ -245,12 +249,44 @@ export function DetalhesEleicao({
         )}
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-        <h2 className="text-base font-bold text-white mb-4">
-          Candidatos Registrados ({candidatos.length})
-        </h2>
+      {/* Seletor de Abas: Candidatos vs Apuração */}
+      <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
+        <button
+          onClick={() => setAbaAtiva('CANDIDATOS')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+            abaAtiva === 'CANDIDATOS'
+              ? 'bg-zinc-800 text-white border border-zinc-700'
+              : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          Candidatos ({candidatos.length})
+        </button>
 
-        {candidatos.length === 0 ? (
+        {eleicao.status !== 'RASCUNHO' && (
+          <button
+            onClick={() => setAbaAtiva('APURACAO')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+              abaAtiva === 'APURACAO'
+                ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            Apuração e Exportação Excel
+          </button>
+        )}
+      </div>
+
+      {/* Conteúdo condicional da aba selecionada */}
+      {abaAtiva === 'APURACAO' && eleicao.status !== 'RASCUNHO' ? (
+        <BoletimUrna eleicaoId={eleicao.id} />
+      ) : (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+          <h2 className="text-base font-bold text-white mb-4">
+            Candidatos Registrados ({candidatos.length})
+          </h2>
+          {candidatos.length === 0 ? (
           <div className="text-center py-10 text-zinc-500 text-sm">
             Nenhum candidato cadastrado para esta eleição até o momento.
           </div>
@@ -283,7 +319,8 @@ export function DetalhesEleicao({
             ))}
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

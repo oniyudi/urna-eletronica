@@ -3,6 +3,17 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { closeDatabase, initDatabase } from './db'
+import {
+  listarEleicoes,
+  buscarEleicaoEmAndamento,
+  criarEleicao,
+  alterarStatusEleicao,
+  listarCandidatos,
+  cadastrarCandidato,
+  removerCadidato,
+  registrarVoto,
+  obterApuracao
+} from './services'
  
 function createWindow(): void {
   // Create the browser window.
@@ -44,6 +55,33 @@ app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')
 
   initDatabase()
+
+  // registra os cananis de comunicação IPC entre o React e o SQLite
+  ipcMain.handle('urna:listarEleicoes', () => listarEleicoes())
+  ipcMain.handle('urna:buscarEleicaoEmAndamento', () => buscarEleicaoEmAndamento())
+  ipcMain.handle(
+    'urna:criarEleicao',
+    (_, titulo: string, tamanhoDigitos: number, digitosPermitidos: string) =>
+      criarEleicao(titulo, tamanhoDigitos, digitosPermitidos)
+  )
+  ipcMain.handle(
+    'urna:alterarStatusEleicao',
+    (_, eleicaoId: number, novoStatus: 'RASCUNHO' | 'EM_ANDAMENTO' | 'ENCERRADA') =>
+      alterarStatusEleicao(eleicaoId, novoStatus)
+  )
+  ipcMain.handle('urna:listarCandidatos', (_, eleicaoId: number) => listarCandidatos(eleicaoId))
+  ipcMain.handle(
+    'urna:cadastrarCandidato',
+    (_, eleicaoId: number, nome: string, numero: string) =>
+      cadastrarCandidato(eleicaoId, nome, numero)
+  )
+  ipcMain.handle('urna:removerCandidato', (_, candidatoId: number) => removerCadidato(candidatoId))
+  ipcMain.handle(
+    'urna:registrarVoto',
+    (_, eleicaoId: number, tipo: 'VALIDO' | 'BRANCO' | 'NULO', numeroDigitado: string | null) =>
+      registrarVoto(eleicaoId, tipo, numeroDigitado)
+  )
+  ipcMain.handle('urna:obterApuracao', (_, eleicaoId: number) => obterApuracao(eleicaoId))
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

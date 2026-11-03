@@ -263,3 +263,29 @@ export function obterApuracao(eleicaoId: number): ApuracaoEleicao {
     candidatos: candidatosComVotos
   }
 }
+
+// funcao para excluir uma eleicao
+export function excluirEleicao(eleicaoId: number): void {
+  const db = getDb()
+
+  const eleicao = db.prepare('SELECT status FROM eleicoes WHERE id = ?').get(eleicaoId) as
+    | { status: string }
+    | undefined
+
+  if (!eleicao) {
+    throw new Error('Eleição não encontrada.')
+  }
+
+  if (eleicao.status === 'EM_ANDAMENTO') {
+    throw new Error('Não é possível excluir uma eleição com votação em andamento. Encerre-a primeiro.')
+  }
+
+  // Executa a exclusão em cascata manual dentro de uma transação atômica
+  const transacaoExclusao = db.transaction((id: number) => {
+    db.prepare('DELETE FROM votos WHERE eleicao_id = ?').run(id)
+    db.prepare('DELETE FROM candidatos WHERE eleicao_id = ?').run(id)
+    db.prepare('DELETE FROM eleicoes WHERE id = ?').run(id)
+  })
+
+  transacaoExclusao(eleicaoId)
+}

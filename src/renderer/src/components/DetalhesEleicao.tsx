@@ -162,13 +162,22 @@ export function DetalhesEleicao({
 
         <div className="flex items-center gap-3">
           {eleicao.status === 'RASCUNHO' && (
-            <button
-              onClick={handleIniciarVotacao}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-xl shadow-lg transition-all cursor-pointer"
-            >
-              <Play className="w-4 h-4 fill-white" />
-              Abrir Votação na Urna
-            </button>
+            <>
+              <button
+                onClick={handleExcluirEleicao}
+                className="flex items-center gap-1.5 bg-zinc-900 hover:bg-red-950/60 text-zinc-400 hover:text-red-400 border border-zinc-800 hover:border-red-800/60 text-xs font-semibold px-3 py-2 rounded-xl transition-all cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                Excluir Rascunho
+              </button>
+              <button
+                onClick={handleIniciarVotacao}
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-xl shadow-lg transition-all cursor-pointer"
+              >
+                <Play className="w-4 h-4 fill-white" />
+                Abrir Votação na Urna
+              </button>
+            </>
           )}
 
           {eleicao.status === 'EM_ANDAMENTO' && (
@@ -190,10 +199,19 @@ export function DetalhesEleicao({
           )}
 
           {eleicao.status === 'ENCERRADA' && (
-            <div className="flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-800/80 px-3 py-1.5 rounded-lg border border-zinc-700">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Eleição Encerrada
-            </div>
+            <>
+              <div className="flex items-center gap-1.5 text-xs text-zinc-400 bg-zinc-800/80 px-3 py-2 rounded-xl border border-zinc-700">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                Eleição Encerrada
+              </div>
+              <button
+                onClick={handleExcluirEleicao}
+                className="flex items-center gap-1.5 bg-red-950/40 hover:bg-red-600 text-red-400 hover:text-white border border-red-800/60 text-xs font-semibold px-3.5 py-2 rounded-xl transition-all cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                Excluir Eleição
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -268,11 +286,10 @@ export function DetalhesEleicao({
       <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
         <button
           onClick={() => setAbaAtiva('CANDIDATOS')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
-            abaAtiva === 'CANDIDATOS'
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${abaAtiva === 'CANDIDATOS'
               ? 'bg-zinc-800 text-white border border-zinc-700'
               : 'text-zinc-400 hover:text-zinc-200'
-          }`}
+            }`}
         >
           <Users className="w-4 h-4" />
           Candidatos ({candidatos.length})
@@ -281,11 +298,10 @@ export function DetalhesEleicao({
         {eleicao.status !== 'RASCUNHO' && (
           <button
             onClick={() => setAbaAtiva('APURACAO')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
-              abaAtiva === 'APURACAO'
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${abaAtiva === 'APURACAO'
                 ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40'
                 : 'text-zinc-400 hover:text-zinc-200'
-            }`}
+              }`}
           >
             <BarChart3 className="w-4 h-4" />
             Apuração e Exportação Excel
@@ -302,38 +318,38 @@ export function DetalhesEleicao({
             Candidatos Registrados ({candidatos.length})
           </h2>
           {candidatos.length === 0 ? (
-          <div className="text-center py-10 text-zinc-500 text-sm">
-            Nenhum candidato cadastrado para esta eleição até o momento.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {candidatos.map((c) => (
-              <div
-                key={c.id}
-                className="flex items-center justify-between p-4 bg-zinc-800/50 border border-zinc-800 rounded-xl"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center font-mono font-bold text-emerald-400 text-lg">
-                    {c.numero}
+            <div className="text-center py-10 text-zinc-500 text-sm">
+              Nenhum candidato cadastrado para esta eleição até o momento.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {candidatos.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between p-4 bg-zinc-800/50 border border-zinc-800 rounded-xl"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center font-mono font-bold text-emerald-400 text-lg">
+                      {c.numero}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white text-sm">{c.nome}</h3>
+                      <p className="text-xs text-zinc-500">ID: {c.id}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-white text-sm">{c.nome}</h3>
-                    <p className="text-xs text-zinc-500">ID: {c.id}</p>
-                  </div>
-                </div>
 
-                {eleicao.status === 'RASCUNHO' && (
-                  <button
-                    onClick={() => handleRemoverCandidato(c.id)}
-                    className="text-zinc-500 hover:text-red-400 p-2 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+                  {eleicao.status === 'RASCUNHO' && (
+                    <button
+                      onClick={() => handleRemoverCandidato(c.id)}
+                      className="text-zinc-500 hover:text-red-400 p-2 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

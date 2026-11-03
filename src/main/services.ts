@@ -4,7 +4,7 @@ export interface Eleicao {
     id: number
     titulo: string
     status: 'RASCUNHO' | 'EM_ANDAMENTO' | 'ENCERRADA'
-    tamannho_digitos: number
+    tamanho_digitos: number
     digitos_permitidos: string
     criado_em: string
     encerrado_em: string | null
@@ -137,8 +137,8 @@ export function cadastrarCandidato(
         throw new Error('O número do candidato é obrigatório')
     }
 
-    if(numeroLimpo.length !== eleicao.tamannho_digitos) {
-        throw new Error(`O número do candidato deve ter exatamente ${eleicao.tamannho_digitos} dígitos`)
+    if(numeroLimpo.length !== eleicao.tamanho_digitos) {
+        throw new Error(`O número do candidato deve ter exatamente ${eleicao.tamanho_digitos} dígitos`)
     }
 
     for (const char of numeroLimpo) {

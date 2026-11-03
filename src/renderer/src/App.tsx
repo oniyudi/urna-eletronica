@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Plus, Vote, Clock, CheckCircle2, AlertTriangle, ChevronRight } from 'lucide-react'
+import { Plus, Vote, Clock, AlertTriangle, ChevronRight, Play } from 'lucide-react'
 import { Eleicao } from '../../preload/index.d'
 import { ModalNovaEleicao } from './components/ModalNovaEleicao'
 import { DetalhesEleicao } from './components/DetalhesEleicao'
+import { TelaUrna } from './components/TelaUrna'
 
 export default function App(): React.JSX.Element {
   const [eleicoes, setEleicoes] = useState<Eleicao[]>([])
   const [eleicaoSelecionada, setEleicaoSelecionada] = useState<Eleicao | null>(null)
   const [eleicaoEmAndamento, setEleicaoEmAndamento] = useState<Eleicao | null>(null)
   const [modalAberto, setModalAberto] = useState(false)
+  const [modoUrnaAtivo, setModoUrnaAtivo] = useState(false)
 
   const carregarDados = async (): Promise<void> => {
     const todas = await window.api.listarEleicoes()
@@ -25,6 +27,19 @@ export default function App(): React.JSX.Element {
   useEffect(() => {
     carregarDados()
   }, [])
+
+  // Se o Modo Urna estiver ativo, exibe a Urna Eletrônica em tela cheia
+  if (modoUrnaAtivo && eleicaoSelecionada) {
+    return (
+      <TelaUrna
+        eleicao={eleicaoSelecionada}
+        onSairDaUrna={() => {
+          setModoUrnaAtivo(false)
+          carregarDados()
+        }}
+      />
+    )
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans select-none">
@@ -51,29 +66,43 @@ export default function App(): React.JSX.Element {
       </header>
 
       <main className="flex-1 p-6 max-w-5xl w-full mx-auto">
-        {eleicaoEmAndamento && (!eleicaoSelecionada || eleicaoSelecionada.id !== eleicaoEmAndamento.id) && (
-          <div className="mb-6 p-4 bg-amber-950/40 border border-amber-500/40 rounded-2xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
-                <AlertTriangle className="w-5 h-5" />
+        {/* Banner de Recuperação Automática de Sessão (Queda de Energia) */}
+        {eleicaoEmAndamento &&
+          (!eleicaoSelecionada || eleicaoSelecionada.id !== eleicaoEmAndamento.id) && (
+            <div className="mb-6 p-4 bg-amber-950/40 border border-amber-500/40 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-amber-200">
+                    Eleição em Andamento Detectada
+                  </h4>
+                  <p className="text-xs text-amber-300/80">
+                    "{eleicaoEmAndamento.titulo}" está aberta. Todos os votos registrados até o momento estão preservados.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-sm font-bold text-amber-200">
-                  Eleição em Andamento Detectada
-                </h4>
-                <p className="text-xs text-amber-300/80">
-                  "{eleicaoEmAndamento.titulo}" está aberta para votação.
-                </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEleicaoSelecionada(eleicaoEmAndamento)}
+                  className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-amber-200 font-semibold text-xs rounded-xl border border-amber-500/30 transition-all cursor-pointer"
+                >
+                  Gerenciar Pleito
+                </button>
+                <button
+                  onClick={() => {
+                    setEleicaoSelecionada(eleicaoEmAndamento)
+                    setModoUrnaAtivo(true)
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded-xl transition-all cursor-pointer"
+                >
+                  <Play className="w-3.5 h-3.5 fill-black" />
+                  Retomar Urna Agora
+                </button>
               </div>
             </div>
-            <button
-              onClick={() => setEleicaoSelecionada(eleicaoEmAndamento)}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs rounded-xl transition-all cursor-pointer"
-            >
-              Retomar Gestão
-            </button>
-          </div>
-        )}
+          )}
 
         {eleicaoSelecionada ? (
           <DetalhesEleicao
@@ -82,9 +111,14 @@ export default function App(): React.JSX.Element {
             onAtualizarStatus={(atualizada) => {
               setEleicaoSelecionada(atualizada)
               carregarDados()
+              // Se acabou de abrir a votação, já entra direto na Urna
+              if (atualizada.status === 'EM_ANDAMENTO') {
+                setModoUrnaAtivo(true)
+              }
             }}
             onAbrirUrna={(eleicao) => {
-              alert(`Modo Urna acionado para a eleição: ${eleicao.titulo} (Fase 5)`)
+              setEleicaoSelecionada(eleicao)
+              setModoUrnaAtivo(true)
             }}
           />
         ) : (
@@ -95,7 +129,9 @@ export default function App(): React.JSX.Element {
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center text-zinc-500">
                 <Vote className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p className="text-sm">Nenhuma eleição criada ainda.</p>
-                <p className="text-xs mt-1">Clique no botão superior para criar a primeira eleição.</p>
+                <p className="text-xs mt-1">
+                  Clique no botão superior para criar a primeira eleição.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">

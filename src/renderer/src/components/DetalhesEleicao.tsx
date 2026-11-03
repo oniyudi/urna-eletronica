@@ -134,6 +134,21 @@ export function DetalhesEleicao({
     }
   }
 
+  const handleExcluirEleicao = async (): Promise<void> => {
+    if (
+      confirm(
+        `Tem certeza que deseja excluir permanentemente a eleição "${eleicao.titulo}" e todos os seus votos e candidatos? Esta ação não pode ser desfeita.`
+      )
+    ) {
+      try {
+        await window.api.excluirEleicao(eleicao.id)
+        onVoltar()
+      } catch (err: unknown) {
+        setErro(limparMensagemErro(err))
+      }
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">

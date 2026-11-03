@@ -207,3 +207,51 @@ export function registrarVoto(
     db.prepare('INSERT INTO votos (eleicao_id, candidato_id, tipo, numero_digitado) VALUES (?, ?, ?, ?)')
         .run(eleicaoId, candidatoId, tipoFinal, numeroDigitado)
 }
+
+// funcao para obter a apuracao dos votos
+export function obterApuracao(eleicaoId: number): ApuracaoEleicao {
+    const db = getDb()
+
+    const eleicao = db.prepare('SELECT * FROm eleicoes WHERE id = ?').get(eleicaoId) as Eleicao | undefined
+
+    if (!eleicao) {
+        throw new Error('Eleição não encontrada.')
+    }
+
+    const contagemTipos = db.prepare(
+        `
+        SELECT COUNT(*) as total,
+        SUM(CASE WHEN tipo = 'BRANCO' THEN 1 ELSE 0 END) as brancos,
+        SUM(CASE WHEN tipo = 'NULO' THEN 1 ELSE 0 END) as nulos,
+        SUM(CASE WHEN tipo = 'VALIDO' THEN 1 ELSE 0 END) as validos
+        FROM votos
+        WHERE eleicao_id = ?
+        `
+    )
+    .get(eleicaoId) as {
+        total: number
+        brancos: number | null
+        nulos: number | null
+        validos: number | null
+    }
+
+    const candidatoComVotos = db.prepare(
+        `
+        SELECT c.*, COUNT(v.id) as votos
+        FROM candidatos c
+        LEFT JOIN votos v ON v.candidato_id = c.id AND v..tipo = 'VALIDO'
+        WHERE c.eleicao_id = ?
+        GROUP BY c.id
+        ORDER BY votos DESC, c.nome ASC
+        `
+    ).all(eleicaoId) as ResultadoCandidato[]
+
+    return {
+        eleicao,
+        totalVotos: contagemTipos.total || 0,
+        votosBrancos: contagemTipos.brancos || 0,
+        votosNulos: contagemTipos.nulos || 0,
+        votosValidos: contagemTipos.validos || 0,
+        candidatos: candidatoComVotos
+    }
+}
